@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZENTRIX AgroEcosystem Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="brand">ZENTRIX <span>AgroEcosystem</span></div>
+  <div class="right">
+    <span id="live-dot" title="ESP32 Connection"></span>
+    <span id="weather-top"></span>
+    <span id="clock"></span>
+    <button id="gear-btn" onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div id="wrap">
+
+  <!-- ALERT BANNER -->
+  <div id="alert-bar" class="show">⚠️ <span id="alert-msg">Configure API keys in Settings (⚙️) to enable AI features</span></div>
+
+  <!-- ENVIRONMENTAL SENSORS -->
+  <div class="sec-label">📡 Environmental Sensors</div>
+  <div class="grid-4">
+    <div class="card" style="border-color:var(--green);">
+      <div class="card-head"><div class="card-title">Soil Moisture</div><div class="card-icon">💧</div></div>
+      <div class="card-val"><span id="soil-moist">0</span><span class="card-unit">%</span></div>
+      <div class="card-sub"><span id="soil-badge" class="badge badge-green">Optimal</span></div>
+      <div class="bar-track"><div class="bar-fill" id="soil-bar"></div></div>
+    </div>
+    <div class="card" style="border-color:var(--orange);">
+      <div class="card-head"><div class="card-title">Soil Temperature</div><div class="card-icon">🌡️</div></div>
+      <div class="card-val"><span id="soil-temp">0</span><span class="card-unit">°C</span></div>
+      <div class="card-sub"><span id="soil-temp-badge" class="badge badge-green">Good</span></div>
+    </div>
+    <div class="card" style="border-color:var(--blue);">
+      <div class="card-head"><div class="card-title">Air Temperature</div><div class="card-icon">🌤️</div></div>
+      <div class="card-val"><span id="air-temp">0</span><span class="card-unit">°C</span></div>
+      <div class="card-sub">Humidity: <b><span id="air-humid">0</span>%</b></div>
+    </div>
+    <div class="card" style="border-color:var(--yellow);">
+      <div class="card-head"><div class="card-title">Light Intensity</div><div class="card-icon">☀️</div></div>
+      <div class="card-val"><span id="light-val">0</span><span class="card-unit">lx</span></div>
+      <div class="card-sub"><span id="light-badge" class="badge badge-green">Daytime</span></div>
+    </div>
+  </div>
+
+  <!-- IRRIGATION & WATER -->
+  <div class="sec-label">💦 Irrigation & Water Management</div>
+  <div class="grid-3">
+    <div class="card" id="pump-card">
+      <div class="card-head"><div class="card-title">Water Pump</div><div class="card-icon">🚰</div></div>
+      <div id="pump-status-text" style="font-size:22px;font-weight:700;color:var(--text2);margin:8px 0;">
+        <span class="pump-status-dot" id="pump-dot"></span><span id="pump-state-txt">OFF</span>
+      </div>
+      <button id="pump-btn" class="pump-btn off" onclick="togglePump()">TURN ON</button>
+    </div>
+    <div class="card" style="border-color:var(--blue);">
+      <div class="card-head"><div class="card-title">Water Tank Level</div><div class="card-icon">🏺</div></div>
+      <div class="tank-visual">
+        <div id="tank-fill"></div>
+        <div class="tank-pct"><span id="tank-level">0</span>%</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">Distance: <b><span id="water-dist">0</span> cm</b></div>
+    </div>
+    <div class="card" style="border-color:var(--teal);">
+      <div class="card-head"><div class="card-title">Soil pH</div><div class="card-icon">🧪</div></div>
+      <div class="card-val"><span id="ph-val">0.00</span></div>
+      <div class="card-sub"><span id="ph-badge" class="badge badge-green">Neutral</span></div>
+    </div>
+  </div>
+
+  <!-- GREENHOUSE & ATMOSPHERE -->
+  <div class="sec-label">🏡 Greenhouse & Atmosphere</div>
+  <div class="grid-2">
+    <div class="card" style="border-color:var(--green);">
+      <div class="card-head"><div class="card-title">Greenhouse Monitor</div><div class="card-icon">🌿</div></div>
+      <div class="gh-stat"><div class="gh-label">Temperature</div><div class="gh-value"><span id="gh-temp">0</span>°C</div></div>
+      <div class="gh-stat"><div class="gh-label">Humidity</div><div class="gh-value"><span id="gh-humid">0</span>%</div></div>
+      <div class="gh-stat"><div class="gh-label">CO₂ Level</div><div class="gh-value"><span id="gh-co2">0</span> ppm</div></div>
+    </div>
+    <div class="card" style="border-color:var(--purple);">
+      <div class="card-head"><div class="card-title">Air Quality (Gas Monitor)</div><div class="card-icon">🌬️</div></div>
+      <div class="gas-row">
+        <div class="gas-name">NH₃</div>
+        <div class="gas-bar-wrap"><div class="gas-bar" id="gas-nh3" style="background:#E040FB;"></div></div>
+        <div class="gas-val"><span id="val-nh3">0</span> ppm</div>
+      </div>
+      <div class="gas-row">
+        <div class="gas-name">Smoke</div>
+        <div class="gas-bar-wrap"><div class="gas-bar" id="gas-smoke" style="background:#FF5722;"></div></div>
+        <div class="gas-val"><span id="val-smoke">0</span> ppm</div>
+      </div>
+      <div class="gas-row">
+        <div class="gas-name">CO</div>
+        <div class="gas-bar-wrap"><div class="gas-bar" id="gas-co" style="background:#FFC107;"></div></div>
+        <div class="gas-val"><span id="val-co">0</span> ppm</div>
+      </div>
+      <div class="gas-row">
+        <div class="gas-name">Alcohol</div>
+        <div class="gas-bar-wrap"><div class="gas-bar" id="gas-alc" style="background:#9C27B0;"></div></div>
+        <div class="gas-val"><span id="val-alc">0</span> ppm</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY & CONTROLS -->
+  <div class="sec-label">🔒 Security & Automation</div>
+  <div class="grid-3">
+    <div class="card" style="border-color:var(--red);">
+      <div class="card-head"><div class="card-title">Motion Detection</div><div class="card-icon">👁️</div></div>
+      <div id="pir-status">NO MOTION</div>
+      <div class="card-sub" style="font-size:11px;">Last: <span id="pir-time">—</span></div>
+      <div style="margin-top:10px;max-height:90px;overflow-y:auto;">
+        <div class="log-entry" id="log-1">—</div>
+        <div class="log-entry" id="log-2">—</div>
+        <div class="log-entry" id="log-3">—</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--green);">
+      <div class="card-head"><div class="card-title">Automated Controls</div><div class="card-icon">🤖</div></div>
+      <div class="toggle-row">
+        <span>Auto-Irrigation</span>
+        <label class="switch"><input type="checkbox" id="auto-irrig" onchange="toggleAutoIrrigation()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Greenhouse Vent</span>
+        <label class="switch"><input type="checkbox" id="auto-vent" onchange="toggleAutoVent()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Smart Lighting</span>
+        <label class="switch"><input type="checkbox" id="auto-light" onchange="toggleAutoLight()"><span class="slider"></span></label>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--orange);">
+      <div class="card-head"><div class="card-title">Weather Forecast</div><div class="card-icon">⛅</div></div>
+      <div class="weather-big"><span id="weather-temp">—</span>°</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px;"><span id="weather-desc">—</span></div>
+      <div class="weather-row">
+        <div class="weather-item">💧 <b><span id="weather-humid">—</span>%</b></div>
+        <div class="weather-item">🌬️ <b><span id="weather-wind">—</span> km/h</b></div>
+        <div class="weather-item">🌧️ <b><span id="weather-rain">—</span>%</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA HISTORY -->
+  <div class="sec-label">📊 Sensor History (Last 24h)</div>
+  <div class="card">
+    <table class="hist-table">
+      <thead>
+        <tr><th>Time</th><th>Soil Moist</th><th>Soil Temp</th><th>Air Temp</th><th>Humidity</th><th>pH</th><th>Tank Level</th></tr>
+      </thead>
+      <tbody id="history-tbody">
+        <tr><td colspan="7" style="text-align:center;color:var(--text3);">No data yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- AI ASSISTANT SECTION -->
+  <div class="sec-label">🤖 AI-Powered Agriculture Assistant</div>
+  <div class="grid-3">
+    <div class="card ai-card" onclick="runCropAdvisor()">
+      <div class="ai-header">
+        <div class="ai-icon">🌾</div>
+        <div class="ai-title">Crop Advisor</div>
+      </div>
+      <div class="ai-desc">Real-time recommendations based on your current sensor readings and local weather patterns</div>
+    </div>
+    <div class="card ai-card" onclick="runDiseaseDetector()">
+      <div class="ai-header">
+        <div class="ai-icon">🔬</div>
+        <div class="ai-title">Disease Detector</div>
+      </div>
+      <div class="ai-desc">AI-powered plant disease identification and treatment guidance using your camera</div>
+    </div>
+    <div class="card ai-card" onclick="runFieldChat()">
+      <div class="ai-header">
+        <div class="ai-icon">💬</div>
+        <div class="ai-title">Field Chat</div>
+      </div>
+      <div class="ai-desc">Ask anything about your farm — get instant answers using live sensor data and expert knowledge</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CAMERA MODAL -->
+<div id="camera-overlay" onclick="closeCameraModal()"></div>
+<div id="camera-modal">
+  <div id="camera-header">
+    <div id="camera-title">📸 Disease Scanner</div>
+    <button id="camera-close" onclick="closeCameraModal()">×</button>
+  </div>
+  <div id="camera-body">
+    <video id="camera-preview" autoplay playsinline></video>
+    <canvas id="camera-canvas" style="display:none;"></canvas>
+    <button id="camera-capture" onclick="captureImage()">📸</button>
+  </div>
+  <div id="camera-tip">Point camera at the crop leaf · Tap 📸 to capture</div>
+</div>
+
+<!-- FULLSCREEN AI RESULT MODAL -->
+<div id="ai-modal-overlay" onclick="closeModal()"></div>
+<div id="ai-modal">
+  <div id="ai-modal-header">
+    <div>
+      <div id="ai-modal-title">🌾 Zentrix AI</div>
+      <div id="ai-modal-subtitle" style="display:none;">Powered by Groq · Llama 3.3 70B</div>
+    </div>
+    <button id="ai-modal-close" onclick="closeModal()">×</button>
+  </div>
+  <div id="ai-modal-body">
+    <div id="ai-modal-loading"><div class="modal-spinner"></div><div class="modal-loading-text" id="modal-loading-msg">AI is thinking...</div></div>
+    <div id="ai-modal-content" style="display:none;"></div>
+  </div>
+  <div id="ai-modal-footer">
+    <span class="modal-powered" id="modal-powered-by" style="display:none;">Groq · Llama 3.3 70B · Live sensor data</span>
+    <button class="modal-close-btn" onclick="closeModal()">✕ Close</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-modal">
+  <div style="background:var(--green);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:15px;font-weight:700;">⚙️ Configuration</div>
+    <button onclick="closeSettings()" style="width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;font-size:16px;cursor:pointer;">×</button>
+  </div>
+  <div style="padding:18px;overflow-y:auto;max-height:70vh;">
+    <!-- ESP32 IP input hidden — auto-connects via location.host when served from ESP32 -->
+    <input id="cfg-esp32" type="hidden">
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">🔑 AI API Keys <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3);">— stored locally in your browser only</span></div>
+    <label style="font-size:12px;font-weight:600;color:var(--text2);">Groq Key <small style="color:var(--text3);font-weight:400;">(console.groq.com — free)</small></label>
+    <input id="cfg-groq" type="password" placeholder="gsk_..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Courier New',monospace;font-size:13px;margin:4px 0 10px;box-sizing:border-box;">
+    <label style="font-size:12px;font-weight:600;color:var(--text2);">Gemini Key <small style="color:var(--text3);font-weight:400;">(aistudio.google.com — free)</small></label>
+    <input id="cfg-gemini" type="password" placeholder="AIza..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Courier New',monospace;font-size:13px;margin:4px 0 10px;box-sizing:border-box;">
+    <label style="font-size:12px;font-weight:600;color:var(--text2);">OpenRouter Key <small style="color:var(--text3);font-weight:400;">(openrouter.ai — free fallback)</small></label>
+    <input id="cfg-or" type="password" placeholder="sk-or-..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Courier New',monospace;font-size:13px;margin:4px 0 14px;box-sizing:border-box;">
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">📍 Farm Location</div>
+    <label style="font-size:12px;font-weight:600;color:var(--text2);">District / Block <small style="color:var(--text3);font-weight:400;">— used by all AI tools and weather</small></label>
+    <select id="cfg-district" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;margin:4px 0 6px;box-sizing:border-box;background:var(--surface);color:var(--text);">
+      <option value="Howrah, West Bengal">Howrah</option>
+      <option value="Kolkata, West Bengal">Kolkata</option>
+      <option value="Hooghly, West Bengal">Hooghly</option>
+      <option value="North 24 Parganas, West Bengal">North 24 Parganas</option>
+      <option value="South 24 Parganas, West Bengal">South 24 Parganas</option>
+      <option value="Nadia, West Bengal">Nadia</option>
+      <option value="Murshidabad, West Bengal">Murshidabad</option>
+      <option value="Burdwan, West Bengal">Burdwan (Bardhaman)</option>
+      <option value="Birbhum, West Bengal">Birbhum</option>
+      <option value="Bankura, West Bengal">Bankura</option>
+      <option value="Purulia, West Bengal">Purulia</option>
+      <option value="Purba Medinipur, West Bengal">Purba Medinipur</option>
+      <option value="Paschim Medinipur, West Bengal">Paschim Medinipur</option>
+      <option value="Malda, West Bengal">Malda</option>
+      <option value="Uttar Dinajpur, West Bengal">Uttar Dinajpur</option>
+      <option value="Dakshin Dinajpur, West Bengal">Dakshin Dinajpur</option>
+      <option value="Jalpaiguri, West Bengal">Jalpaiguri</option>
+      <option value="Darjeeling, West Bengal">Darjeeling</option>
+      <option value="Cooch Behar, West Bengal">Cooch Behar</option>
+      <option value="Alipurduar, West Bengal">Alipurduar</option>
+    </select>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">All AI advice, weather forecasts and crop recommendations will be tailored to your district.</div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">🏺 Hardware Config</div>
+    <label style="font-size:12px;font-weight:600;color:var(--text2);">Tank Depth (cm)</label>
+    <input id="cfg-tank" type="number" placeholder="40" min="5" max="300"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;margin:4px 0 6px;box-sizing:border-box;">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Measure from ultrasonic sensor face down to tank floor when full.</div>
+
+    <button onclick="saveSettings()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:9px;font-family:system-ui,sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">💾 Save & Apply</button>
+    <button onclick="clearSettings()" style="width:100%;padding:10px;background:var(--red-bg);color:var(--red);border:1.5px solid var(--red-l);border-radius:9px;font-family:system-ui,sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🗑️ Clear All Saved Keys</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
